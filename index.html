@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-svg@1.1.0/lib/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/3.0.9/umd.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-4xl font-bold text-center mb-8 text-gray-800">QR Code Generator</h1>
+        
+        <textarea 
+            id="inputText" 
+            class="w-full p-4 border-2 border-gray-300 rounded-lg mb-4 resize-none" 
+            placeholder="Enter text or URL here..."
+            rows="4"></textarea>
+        
+        <button 
+            onclick="generateQR()" 
+            class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition-colors mb-8">
+            Generate QR Code
+        </button>
+
+        <div id="qrcode" class="flex justify-center mb-8 hidden"></div>
+        
+        <div class="flex gap-4 justify-center hidden" id="downloadButtons">
+            <button 
+                onclick="downloadJPG()"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                Download JPG
+            </button>
+            <button 
+                onclick="downloadSVG()"
+                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                Download SVG
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentSVG = null;
+
+        function generateQR() {
+            const text = document.getElementById('inputText').value;
+            const qrcodeDiv = document.getElementById('qrcode');
+            const downloadButtons = document.getElementById('downloadButtons');
+            
+            if (!text) {
+                alert('Please enter some text or URL');
+                return;
+            }
+
+            // Clear previous QR code
+            qrcodeDiv.innerHTML = '';
+            downloadButtons.classList.add('hidden');
+            
+            // Generate new QR code
+            const qr = new QRCode({
+                content: text,
+                padding: 2,
+                width: 256,
+                height: 256,
+                color: "#000000",
+                background: "#ffffff",
+                ecl: "H"
+            });
+            
+            currentSVG = qr.svg();
+            qrcodeDiv.innerHTML = currentSVG;
+
+            // Show elements
+            qrcodeDiv.classList.remove('hidden');
+            downloadButtons.classList.remove('hidden');
+        }
+
+        function downloadSVG() {
+            if (!currentSVG) return;
+            const blob = new Blob([currentSVG], { type: "image/svg+xml" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'qrcode.svg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadJPG() {
+            if (!currentSVG) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            // Render SVG to canvas using canvg
+            const v = canvg.Canvg.fromString(ctx, currentSVG);
+            v.start();
+            
+            // Wait for rendering to complete
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.download = 'qrcode.jpg';
+                link.href = canvas.toDataURL('image/jpeg');
+                link.click();
+            }, 100);
+        }
+    </script>
+</body>
+</html>
